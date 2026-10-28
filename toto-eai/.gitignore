@@ -1,0 +1,7 @@
+target/
+.idea/
+*.iml
+logs/
+sample/
+# 접속 정보/비밀번호가 들어있는 로컬 설정은 절대 커밋하지 않습니다
+src/main/resources/application-local.yml

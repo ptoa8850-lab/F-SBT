@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: toto-eai
+  profiles:
+    active: local
+server:
+  port: 8081
+# 지원자 정보 (접속 정보 조회 API 호출 및 복호화 키로 사용됨)
+# 실제 값은 application-local.yml 에 넣고 커밋하지 마세요.
+applicant:
+  name: ${APPLICANT_NAME:박도영}
+  phone-number: ${APPLICANT_PHONE:010-6276-5581}
+  email: ${APPLICANT_EMAIL:tewry_@naver.com}
+
+# 과제 문서(슬라이드 5)에 적힌 호출 주소 / 인증 정보
+recruiting-api:
+  url: https://inspien.it-cpi002-rt.cfapps.ap10.hana.ondemand.com/http/RecruitingTest
+  username: ${RECRUITING_API_USER:}
+  password: ${RECRUITING_API_PASSWORD:}
