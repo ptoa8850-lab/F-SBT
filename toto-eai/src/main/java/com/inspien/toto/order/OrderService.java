@@ -17,7 +17,7 @@ public class OrderService {
     private static final Logger log = LoggerFactory.getLogger(OrderService.class);
 
     /** 수신 직후 상태. 이후 단계(영수증 업로드, 배송 등록)에서 값이 바뀐다. */
-    public static final String STATUS_NEW = "NEW";
+    public static final String STATUS_NEW = OrderStatus.NEW;
 
     private final OrderXmlParser parser = new OrderXmlParser();
     private final OrderRepository repository;
