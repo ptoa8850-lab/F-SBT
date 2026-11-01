@@ -12,10 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
-/**
- * 주문 XML 수신 API.   POST /api/orders   (본문: 샘플과 같은 형태의 XML)
- * 본문을 byte[] 로 받아 직접 글자로 바꾼다 (EUC-KR/UTF-8 모두 처리하기 위해).
- */
+/** 주문 XML 수신 API (POST /api/orders). EUC-KR, UTF-8 모두 받을 수 있도록 본문을 byte[]로 받는다. */
 @RestController
 @RequestMapping("/api/orders")
 public class OrderController {
@@ -43,8 +40,8 @@ public class OrderController {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
 
-        // 저장된 주문의 영수증을 바로 올린다. 실패해도 주문 저장은 이미 끝났으므로 응답은 정상으로 돌려주고,
-        // 실패한 건은 NEW 로 남아 스케줄러가 다시 시도한다.
+        // 영수증은 바로 올린다. 실패해도 주문 저장은 끝났으므로 응답은 정상으로 보내고,
+        // 남은 건은 스케줄러가 다시 처리한다.
         if (response.savedCount() > 0) {
             try {
                 receiptService.processNewOrders();

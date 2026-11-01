@@ -3,8 +3,8 @@ package com.inspien.toto.ftp;
 import java.util.Map;
 
 /**
- * 접속 정보 API 의 FTP_CONN(복호화 후)을 FTP 접속 정보로 바꾼다.
- * 키 이름을 아직 모르므로 흔한 이름 후보를 대소문자/밑줄 무시하고 찾는다. 못 찾으면 있는 키 목록(값 제외)을 알려준다.
+ * FTP 접속 정보 변환. 응답 키는 URL, PORT, ID, PASSWORD, PATH이고,
+ * URL에는 ftp:// 나 포트, 경로가 붙어 있을 수 있다.
  */
 public final class FtpResolver {
 
@@ -17,33 +17,60 @@ public final class FtpResolver {
     public static Target resolve(Map<String, String> conn) {
         String protocol = find(conn, "protocol", "type", "scheme");
         if (protocol != null && protocol.toLowerCase().contains("sftp")) {
-            throw new IllegalStateException("FTP_CONN 이 SFTP 입니다. 현재 구현은 일반 FTP 용입니다 (SFTP 라이브러리로 교체 필요)");
+            throw sftp("protocol=" + protocol);
         }
-        String host = find(conn, "host", "hostname", "ip", "server", "address", "ftphost");
-        String port = find(conn, "port", "ftpport");
-        String user = find(conn, "username", "user", "userid", "id", "account");
-        String pw = find(conn, "password", "pw", "pwd", "passwd");
-        String dir = find(conn, "directory", "dir", "path", "remotepath", "remotedir", "folder", "ftppath", "uploadpath");
 
-        if (host == null) {
-            throw fail(conn, "host(서버 주소)");
+        String rawHost = find(conn, "url", "host", "hostname", "ip", "server", "address", "ftphost");
+        String port = find(conn, "port", "ftpport");
+        String user = find(conn, "id", "username", "user", "userid", "account");
+        String pw = find(conn, "password", "pw", "pwd", "passwd");
+        String dir = find(conn, "path", "directory", "dir", "remotepath", "remotedir", "folder", "ftppath", "uploadpath");
+
+        if (rawHost == null) {
+            throw fail(conn, "URL(서버 주소)");
         }
         if (user == null) {
-            throw fail(conn, "username");
+            throw fail(conn, "ID(사용자)");
         }
         if (pw == null) {
-            throw fail(conn, "password");
+            throw fail(conn, "PASSWORD");
         }
+
+        // URL에서 호스트만 분리한다
+        String host = rawHost;
+        String portFromUrl = null;
+        int scheme = host.indexOf("://");
+        if (scheme >= 0) {
+            String s = host.substring(0, scheme).toLowerCase();
+            if (s.contains("sftp") || s.equals("ssh")) {
+                throw sftp("URL=" + rawHost);
+            }
+            host = host.substring(scheme + 3);
+        }
+        int slash = host.indexOf('/');
+        if (slash >= 0) {
+            if (dir == null) {
+                dir = host.substring(slash);   // PATH가 없으면 URL 뒤의 경로를 사용한다
+            }
+            host = host.substring(0, slash);
+        }
+        int colon = host.lastIndexOf(':');
+        if (colon >= 0) {
+            portFromUrl = host.substring(colon + 1);
+            host = host.substring(0, colon);
+        }
+
         int portNo = 21;
-        if (port != null) {
+        String portText = port != null ? port : portFromUrl;
+        if (portText != null) {
             try {
-                portNo = Integer.parseInt(port.trim());
+                portNo = Integer.parseInt(portText.trim());
             } catch (NumberFormatException e) {
-                throw new IllegalStateException("FTP port 값이 숫자가 아닙니다: " + port);
+                throw new IllegalStateException("FTP port 값이 숫자가 아닙니다: " + portText);
             }
         }
         if (portNo == 22) {
-            throw new IllegalStateException("FTP 포트가 22 입니다 -> SFTP 일 가능성이 큽니다 (현재 구현은 일반 FTP)");
+            throw sftp("PORT=22");
         }
         return new Target(host, portNo, user, pw, dir);
     }
@@ -63,8 +90,12 @@ public final class FtpResolver {
         return key.toLowerCase().replace("_", "").replace("-", "").replace(" ", "");
     }
 
+    private static IllegalStateException sftp(String why) {
+        return new IllegalStateException("SFTP 로 보입니다 (" + why + "). 현재 구현은 일반 FTP 용이라 SFTP 라이브러리로 교체가 필요합니다");
+    }
+
     private static IllegalStateException fail(Map<String, String> conn, String missing) {
         return new IllegalStateException("FTP 접속 정보에서 " + missing + " 를 찾지 못했습니다. 응답에 있는 키 = "
-                + conn.keySet() + " (FtpResolver 에 이 키 이름을 추가하세요)");
+                + conn.keySet());
     }
 }

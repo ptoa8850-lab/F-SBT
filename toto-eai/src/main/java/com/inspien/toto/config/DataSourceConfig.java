@@ -10,11 +10,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import javax.sql.DataSource;
 import java.util.Map;
 
-/**
- * 주문 DB(ORDER_TB)와 배송 DB(SHIPMENT_TB) 연결을 만든다.
- * 접속 정보가 yml 이 아니라 실행 중에 정해지므로, 스프링 자동설정 대신 직접 만든다.
- * (DataSource 가 2개라서 자동설정은 어차피 동작하지 않는다)
- */
+/** 주문 DB와 배송 DB의 연결을 만든다. 접속 정보를 실행 중에 받아오기 때문에 직접 구성한다. */
 @Configuration
 public class DataSourceConfig {
 
@@ -45,7 +41,7 @@ public class DataSourceConfig {
         if (props.isLocal()) {
             DbProperties.Local l = props.local();
             if (l == null || l.url() == null || l.url().isBlank()) {
-                throw new IllegalStateException("db.mode=local 인데 db.local.url 이 비어 있습니다 (application-local.yml 확인)");
+                throw new IllegalStateException("db.mode=local 인데 db.local.url 이 비어있음 (application-local.yml 확인)");
             }
             url = l.url();
             user = l.username();
@@ -62,7 +58,7 @@ public class DataSourceConfig {
         ds.setJdbcUrl(url);
         ds.setUsername(user);
         ds.setPassword(password);
-        ds.setMaximumPoolSize(2);   // 제공 DB 는 여러 지원자가 같이 쓰므로 연결을 적게 잡는다
+        ds.setMaximumPoolSize(2);   // 공용 서버라서 풀 크기를 작게 잡는다
         return ds;
     }
 }

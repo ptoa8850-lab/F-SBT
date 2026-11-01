@@ -13,12 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 
-/**
- * 앱이 뜬 직후 한 번 실행되어 접속 상태를 점검하고 로그로 남긴다.
- * - 접속 정보는 키 이름만 출력한다 (비밀번호 등 값은 출력하지 않음)
- * - ORDER_TB / SHIPMENT_TB 에 실제로 접근되는지 확인한다
- * - 샘플 주문 XML 은 sample/sample-order.xml 로 저장한다
- */
+/** 시작할 때 접속 정보와 테이블 접근 여부를 로그로 확인하고, 샘플 XML을 파일로 저장한다. */
 @Component
 public class ConnectionBootstrap implements ApplicationRunner {
 
@@ -60,7 +55,7 @@ public class ConnectionBootstrap implements ApplicationRunner {
                     "SELECT COUNT(*) FROM " + table + " WHERE APPLICANT_KEY = ?", Integer.class, info.applicantKey());
             log.info("{} 접근 OK (내 APPLICANT_KEY 의 행 수 = {})", table, cnt);
         } catch (Exception e) {
-            // 앱은 계속 띄우되, 원인을 바로 알 수 있게 로그를 남긴다
+            // 접근에 실패해도 앱은 계속 실행하고 원인만 로그에 남긴다
             log.error("{} 접근 실패: {}", table, e.getMessage());
         }
     }

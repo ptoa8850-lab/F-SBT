@@ -4,10 +4,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * 접속 정보 API 에서 받은 (복호화된) 키-값 목록을 JDBC 접속 정보로 바꾼다.
- *
- * 응답에 들어있는 키 이름을 아직 모르기 때문에, 흔히 쓰이는 이름 후보를 대소문자/밑줄 무시하고 찾는다.
- * 못 찾으면 어떤 키들이 있었는지(값 제외) 알려주는 예외를 던진다 -> 그 키 이름을 보고 여기 후보만 추가하면 된다.
+ * 접속 정보(키-값)를 JDBC 접속 정보로 변환한다.
+ * 키 이름은 대소문자와 밑줄을 무시하고 여러 후보로 찾는다.
  */
 public final class ProvidedDbResolver {
 
@@ -71,7 +69,6 @@ public final class ProvidedDbResolver {
 
     private static IllegalStateException fail(Map<String, String> conn, String missing) {
         Set<String> keys = conn.keySet();
-        return new IllegalStateException("접속 정보에서 " + missing + " 를 찾지 못했습니다. 응답에 있는 키 = " + keys
-                + " (ProvidedDbResolver 에 이 키 이름을 추가하세요)");
+        return new IllegalStateException("접속 정보에서 " + missing + " 를 찾지 못했습니다. 응답에 있는 키 = " + keys);
     }
 }

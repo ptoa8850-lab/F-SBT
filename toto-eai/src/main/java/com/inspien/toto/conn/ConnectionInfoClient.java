@@ -17,9 +17,7 @@ import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/**
- * 슬라이드 5: 이름/전화번호/이메일을 보내 DB·FTP 접속 정보를 받아오고 복호화한다.
- */
+/** 접속 정보 조회 API를 호출하고 응답을 복호화한다. */
 @Component
 public class ConnectionInfoClient {
 
@@ -44,10 +42,10 @@ public class ConnectionInfoClient {
         );
     }
 
-    /** 요청 JSON 을 만들어 POST 하고 응답 JSON 을 돌려준다. */
+    /** API를 호출하고 응답 JSON을 반환한다. */
     private JsonNode call() {
         try {
-            // 문자열을 직접 이어붙이지 않고 ObjectMapper 로 만들어 한글/특수문자 깨짐을 막는다.
+            // JSON은 문자열 연결 대신 ObjectMapper로 만든다
             Map<String, String> body = new LinkedHashMap<>();
             body.put("NAME", applicant.name());
             body.put("PHONE_NUMBER", applicant.phoneNumber());
@@ -75,9 +73,8 @@ public class ConnectionInfoClient {
     }
 
     /**
-     * *_CONN 필드가 어떤 모양이어도 처리하기 위한 메서드.
-     * - 문자열 하나가 통째로 암호화된 경우: 복호화 후 JSON 이면 펼치고, 아니면 "value" 키로 담는다.
-     * - 객체이고 안의 값들이 각각 암호화된 경우: 값마다 복호화한다.
+     * *_CONN 값을 복호화해 Map으로 만든다.
+     * 문자열 전체가 암호화된 경우와 객체의 각 값이 암호화된 경우를 모두 처리한다.
      */
     Map<String, String> decryptField(JsonNode node) {
         Map<String, String> result = new LinkedHashMap<>();
@@ -109,7 +106,7 @@ public class ConnectionInfoClient {
         try {
             return AesUtil.decrypt(text, applicant.phoneNumber());
         } catch (RuntimeException e) {
-            return text; // 암호화되지 않은 평문 값(예: APPLICANT_KEY 성격)은 그대로 둔다.
+            return text; // 암호화되지 않은 값은 그대로 사용한다
         }
     }
 
@@ -121,7 +118,7 @@ public class ConnectionInfoClient {
         }
     }
 
-    /** SAMPLE_DATA: Base64 -> EUC-KR 문자열(XML) */
+    /** SAMPLE_DATA(Base64, EUC-KR)를 문자열로 변환한다. */
     private String decodeSample(String base64) {
         if (base64 == null || base64.isBlank()) {
             return null;

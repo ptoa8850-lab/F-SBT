@@ -5,7 +5,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
-/** SHIPMENT_TB(운송회사 DB) 접근 전담 */
+/** SHIPMENT_TB 접근 */
 @Repository
 public class ShipmentRepository {
 
@@ -34,5 +34,12 @@ public class ShipmentRepository {
         jdbc.update(
                 "INSERT INTO SHIPMENT_TB (SHIPMENT_ID, APPLICANT_KEY, ORDER_ID, ITEM_ID, ADDRESS) VALUES (?, ?, ?, ?, ?)",
                 shipmentId, applicantKey, orderId, itemId, address);
+    }
+
+    /** 등록된 배송 건수 */
+    public int count() {
+        Integer cnt = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM SHIPMENT_TB WHERE APPLICANT_KEY = ?", Integer.class, applicantKey);
+        return cnt == null ? 0 : cnt;
     }
 }

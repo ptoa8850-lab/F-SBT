@@ -8,16 +8,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 주문 XML 수신 처리: 파싱 -> 중복 확인 -> ORDER_ID 부여 -> ORDER_TB INSERT.
- * 한 건이 실패해도 나머지는 계속 처리하고, 실패 사유는 응답과 로그에 남긴다.
+ * 주문 XML 수신 처리: 파싱, 중복 확인, ORDER_ID 부여, ORDER_TB 저장.
+ * 한 건이 실패해도 나머지는 계속 처리한다.
  */
 @Service
 public class OrderService {
 
     private static final Logger log = LoggerFactory.getLogger(OrderService.class);
-
-    /** 수신 직후 상태. 이후 단계(영수증 업로드, 배송 등록)에서 값이 바뀐다. */
-    public static final String STATUS_NEW = OrderStatus.NEW;
 
     private final OrderXmlParser parser = new OrderXmlParser();
     private final OrderRepository repository;
@@ -26,9 +23,9 @@ public class OrderService {
         this.repository = repository;
     }
 
-    /** ORDER_ID 를 "현재 최대값 + 1" 로 만들기 때문에, 동시에 두 요청이 들어와도 겹치지 않도록 한 번에 하나씩 처리한다. */
+    /** ORDER_ID를 최대값 + 1로 만들기 때문에 동시에 하나씩만 처리한다. */
     public synchronized OrderReceiveResponse receive(String xml) {
-        ParseResult parsed = parser.parse(xml);   // XML 형식이 깨졌으면 IllegalArgumentException
+        ParseResult parsed = parser.parse(xml);   // XML 형식이 잘못되면 IllegalArgumentException
         log.info("[RECEIVE] HEADER={}건, ITEM={}건, 정상조립={}건, 오류={}건, 경고={}건",
                 parsed.headerCount(), parsed.itemCount(), parsed.orders().size(),
                 parsed.errors().size(), parsed.warnings().size());
@@ -49,8 +46,8 @@ public class OrderService {
                     continue;
                 }
                 String orderId = OrderIdGenerator.next(last);
-                repository.insert(orderId, row, STATUS_NEW);
-                last = orderId;   // 저장에 성공했을 때만 번호를 소비한다
+                repository.insert(orderId, row, OrderStatus.NEW);
+                last = orderId;   // 저장에 성공한 경우에만 번호를 올린다
                 savedIds.add(orderId);
                 log.info("[DB_INSERT] 성공 orderId={} ({})", orderId, label);
             } catch (Exception e) {

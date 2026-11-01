@@ -14,10 +14,7 @@ import java.io.StringWriter;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-/**
- * 영수증 XML 만들기. (회계팀이 FTP 에서 가져가는 파일)
- * 문자열을 이어붙이지 않고 DOM 으로 만들어서 &, < 같은 특수문자가 자동으로 안전하게 처리된다.
- */
+/** 영수증 XML 생성. DOM으로 만들어서 특수문자가 자동으로 처리된다. */
 public final class ReceiptXmlBuilder {
 
     private ReceiptXmlBuilder() {
@@ -49,10 +46,7 @@ public final class ReceiptXmlBuilder {
         }
     }
 
-    /**
-     * 파일명: 지원자 이름(한글) 포함이 필수 조건. 주문번호까지 넣어 파일마다 이름이 겹치지 않게 한다.
-     * (FTP 는 덮어쓰기/삭제가 안 되므로 이름이 같으면 업로드가 실패한다)
-     */
+    /** 파일명은 지원자 이름과 주문번호로 만든다. (덮어쓰기가 안 되므로 이름이 겹치면 안 됨) */
     public static String fileName(String applicantName, String orderId) {
         return applicantName + "_" + orderId + ".xml";
     }

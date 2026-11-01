@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
-/** ORDER_TB 접근 전담. SQL 은 모두 여기에만 둔다. APPLICANT_KEY 는 항상 조건에 포함한다. */
+/** ORDER_TB 접근. 모든 쿼리에 APPLICANT_KEY 조건을 포함한다. */
 @Repository
 public class OrderRepository {
 
@@ -19,7 +19,7 @@ public class OrderRepository {
         this.applicantKey = info.applicantKey();
     }
 
-    /** 같은 고객이 같은 상품을 이미 주문해 저장했는지 (같은 XML 을 두 번 받아도 중복 저장 방지) */
+    /** 같은 USER_ID, ITEM_ID 주문이 이미 있는지 (중복 저장 방지) */
     public boolean exists(String userId, String itemId) {
         Integer cnt = jdbc.queryForObject(
                 "SELECT COUNT(*) FROM ORDER_TB WHERE APPLICANT_KEY = ? AND USER_ID = ? AND ITEM_ID = ?",
@@ -41,7 +41,7 @@ public class OrderRepository {
                 orderId, applicantKey, r.userId(), r.itemId(), r.name(), r.address(), r.itemName(), r.price(), status);
     }
 
-    /** 특정 상태의 주문 목록 (ORDER_ID 순) */
+    /** 상태별 주문 목록 */
     public List<StoredOrder> findByStatus(String status) {
         return jdbc.query(
                 "SELECT ORDER_ID, USER_ID, ITEM_ID, NAME, ADDRESS, ITEM_NAME, PRICE FROM ORDER_TB "
@@ -55,5 +55,15 @@ public class OrderRepository {
     public void updateStatus(String orderId, String status) {
         jdbc.update("UPDATE ORDER_TB SET STATUS = ? WHERE APPLICANT_KEY = ? AND ORDER_ID = ?",
                 status, applicantKey, orderId);
+    }
+
+    /** 상태별 주문 건수 */
+    public java.util.Map<String, Integer> countByStatus() {
+        java.util.Map<String, Integer> result = new java.util.LinkedHashMap<>();
+        jdbc.query("SELECT STATUS, COUNT(*) FROM ORDER_TB WHERE APPLICANT_KEY = ? GROUP BY STATUS ORDER BY STATUS",
+                (org.springframework.jdbc.core.RowCallbackHandler) rs ->
+                        result.put(String.valueOf(rs.getString(1)), rs.getInt(2)),
+                applicantKey);
+        return result;
     }
 }
